@@ -1,0 +1,102 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-headline: "Space Grotesk", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-label: "Space Grotesk", sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+
+  --color-surface-container-low: #1b1b1b;
+  --color-surface-container-highest: #353535;
+  --color-surface-bright: #393939;
+  --color-tertiary-fixed: #e4e2e2;
+  --color-on-tertiary-fixed: #1b1c1c;
+  --color-secondary-container: #693c45;
+  --color-primary: #ffb5a1;
+  --color-surface-dim: #131313;
+  --color-surface-container: #1f1f1f;
+  --color-on-surface: #e2e2e2;
+  --color-on-tertiary-container: #f2f0ef;
+  --color-surface: #131313;
+  --color-surface-container-lowest: #0e0e0e;
+  --color-on-primary-fixed: #3c0800;
+  --color-tertiary-fixed-dim: #c7c6c6;
+  --color-on-surface-variant: #e4beb4;
+  --color-secondary-fixed: #ffd9df;
+  --color-surface-container-high: #2a2a2a;
+  --color-inverse-primary: #b22b00;
+  --color-secondary-fixed-dim: #f4b6c1;
+  --color-error-container: #93000a;
+  --color-on-error-container: #ffdad6;
+  --color-on-primary: #611300;
+  --color-inverse-surface: #e2e2e2;
+  --color-on-tertiary: #303031;
+  --color-on-secondary-fixed-variant: #663a43;
+  --color-on-tertiary-fixed-variant: #464747;
+  --color-on-secondary-container: #e5a8b3;
+  --color-primary-container: #cc3300;
+  --color-surface-variant: #353535;
+  --color-on-primary-fixed-variant: #881f00;
+  --color-error: #ffb4ab;
+  --color-on-error: #690005;
+  --color-tertiary-container: #6d6d6d;
+  --color-secondary: #f4b6c1;
+  --color-primary-fixed: #ffdbd1;
+  --color-primary-fixed-dim: #ffb5a1;
+  --color-outline-variant: #5b4039;
+  --color-on-background: #e2e2e2;
+  --color-surface-tint: #ffb5a1;
+  --color-on-secondary-fixed: #330f19;
+  --color-inverse-on-surface: #303030;
+  --color-background: #131313;
+  --color-tertiary: #c7c6c6;
+  --color-on-secondary: #4c242d;
+  --color-outline: #ab8980;
+  --color-on-primary-container: #ffece7;
+}
+
+@layer base {
+  body {
+    @apply bg-surface text-on-surface font-body selection:bg-primary-container/30 overflow-x-hidden;
+  }
+}
+
+@layer utilities {
+  .glass-card {
+    background: rgba(31, 31, 31, 0.4);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(171, 137, 128, 0.15);
+  }
+
+  .shimmer-text {
+    background: linear-gradient(90deg, #cc3300 0%, #ff5522 50%, #cc3300 100%);
+    background-size: 200% auto;
+    color: transparent;
+    -webkit-background-clip: text;
+    background-clip: text;
+    animation: shimmer 3s infinite linear;
+  }
+
+  @keyframes shimmer {
+    to { background-position: 200% center; }
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .glow-border {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .glow-border:hover {
+    box-shadow: 0 0 30px rgba(204, 51, 0, 0.15);
+    border-color: rgba(204, 51, 0, 0.4);
+  }
+}
