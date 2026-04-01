@@ -1,5 +1,6 @@
 import { motion } from "motion/react";
 import { Sparkles, History as Timeline } from "lucide-react";
+import scriptToVideoImg from "../../assets/images/script-to-video.jpeg";
 
 const ScriptToVideo = () => (
   <div className="max-w-7xl mx-auto px-8 w-full py-20">
@@ -26,8 +27,8 @@ const ScriptToVideo = () => (
         className="md:col-span-8 relative overflow-hidden rounded-xl bg-surface-container-low group h-[400px] md:h-full"
       >
         <img
-          className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-1000"
-          src="https://lh3.googleusercontent.com/aida-public/AB6AXuDCg8WOkNS_N6C5LAt4XunB0DJ27TND4qN0bV7espg-uzSjO3vivUPusxv1kgDdouNUBLk9Pk3tQDRSAqHKWgSXRLB4_5cSHVCcJWwyIPqe7NNT9lF4hVbezCp4dOI2qqXm350yRvzDphOoCVV9P-uDG4LSEWSHBT5U98yrGdBIBeGWPynDf_VF46kAAifg5jxnHIatikY2IJr3iZAaaLtI4WzyArLYxVEvgEgYsBap3yvV-ZZ1mDfRf45KG9qK1WEPOxbIn-B3BYk"
+          className="w-full h-full object-cover transition-all duration-1000"
+          src={scriptToVideoImg}
           alt="Screenplay morphing"
           referrerPolicy="no-referrer"
         />

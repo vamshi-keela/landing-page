@@ -18,7 +18,7 @@ const FinalCta = () => (
         Join the elite rank of AI directors and bring your untold stories to life today.
       </p>
       <button className="bg-primary-container text-on-primary-container px-12 py-5 rounded-full font-headline font-bold text-xl tracking-wide hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary-container/30">
-        Get Early Access
+        Join waitlist
       </button>
     </motion.div>
   </section>

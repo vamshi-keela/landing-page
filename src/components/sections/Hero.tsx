@@ -21,7 +21,7 @@ const Hero = () => {
     >
       <motion.div style={{ scale: imgScale }} className="absolute inset-0 z-0">
         <img
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover opacity-70 "
           src="https://lh3.googleusercontent.com/aida-public/AB6AXuDDeRkSqx9zZOmkV1oYaNwnk5ytaV5A-l26ZhXBJQPvmISb1OHsV10NgWL_G0v5hxVi5zJYroGdxOtWPsCUBLlPIceJPbYSFDNqtDswaOuP10HWq22Ei2crwcJIwk_SwgtRsQ3YkrTmNfFFn2wFY2e9Q9TdXNoUYz1WSQsc86qgDd6kx_f4Jgegmy-Z2SFpBdhXaWU4UXXAO82ZL67SiiLCydXYn3MSFFyjs2M3eMnM76e5SrEOMIe-Pt7N4KBkRmpAxjKKWyluBM4"
           alt="Cinematic studio"
           referrerPolicy="no-referrer"
@@ -73,7 +73,7 @@ const Hero = () => {
             <ArrowRight className="group-hover:translate-x-1 transition-transform" />
           </button>
           <button className="glass-card text-on-surface px-10 py-5 rounded-full font-headline font-bold text-lg tracking-wide hover:bg-on-surface/5 hover:scale-105 active:scale-95 transition-all">
-            View Pricing
+            Join Waitlist
           </button>
         </motion.div>
       </motion.div>
@@ -82,3 +82,4 @@ const Hero = () => {
 };
 
 export default Hero;
+
