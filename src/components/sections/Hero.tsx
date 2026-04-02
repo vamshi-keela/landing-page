@@ -1,7 +1,8 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { motion, useScroll, useTransform } from "motion/react";
 import { ArrowRight } from "lucide-react";
 import { Z_INDEX } from "../../utils/constants";
+import WaitlistModal from "./waitlistmodal";
 
 const Hero = () => {
   const sectionRef = useRef<HTMLElement>(null);
@@ -12,6 +13,7 @@ const Hero = () => {
   const imgScale = useTransform(scrollYProgress, [0, 1], [1, 1.25]);
   const contentY = useTransform(scrollYProgress, [0, 1], [0, -150]);
   const contentOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0.5]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
     <section
@@ -72,12 +74,14 @@ const Hero = () => {
             Start Directing
             <ArrowRight className="group-hover:translate-x-1 transition-transform" />
           </button>
-          <button className="glass-card text-on-surface px-10 py-5 rounded-full font-headline font-bold text-lg tracking-wide hover:bg-on-surface/5 hover:scale-105 active:scale-95 transition-all">
+          <button onClick={() => setIsModalOpen(true)} className="glass-card text-on-surface px-10 py-5 rounded-full font-headline font-bold text-lg tracking-wide hover:bg-on-surface/5 hover:scale-105 active:scale-95 transition-all">
             Join Waitlist
           </button>
         </motion.div>
       </motion.div>
+      <WaitlistModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </section>
+
   );
 };
 

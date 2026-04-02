@@ -25,4 +25,5 @@ export const Z_INDEX: Record<string, number> = {
   hero: 10,
   footer: 60,
   particles: 5,
+  modal: 1000,
 };

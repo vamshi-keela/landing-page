@@ -31,7 +31,7 @@ const Footer = () => (
           <li><a className="font-body text-sm text-on-surface-variant hover:text-primary-container transition-colors" href="#">Terms of Service</a></li>
         </ul>
       </div>
-      <div>
+      {/* <div>
         <h4 className="font-headline font-bold text-sm text-on-surface mb-6 uppercase tracking-widest">Newsletter</h4>
         <div className="flex bg-surface-container rounded-lg overflow-hidden p-1 border border-outline-variant/10 focus-within:border-primary-container transition-colors">
           <input
@@ -43,11 +43,11 @@ const Footer = () => (
             Join
           </button>
         </div>
-      </div>
+      </div> */}
     </div>
     <div className="max-w-7xl mx-auto mt-20 pt-8 border-t border-outline-variant/10 text-center">
       <p className="font-body text-sm text-on-surface-variant">
-        © 2024 Induce. The Induce Production Suite.
+        © 2026 Induce. The Induce Production Suite.
       </p>
     </div>
   </footer>

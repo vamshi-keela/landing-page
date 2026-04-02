@@ -60,11 +60,11 @@ const DirectorMode = () => {
                 />
               </svg>
             </motion.div>
-            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+            {/* <div className="absolute inset-0 flex items-center justify-center bg-black/20">
               <button className="w-20 h-20 rounded-full border border-white/30 flex items-center justify-center backdrop-blur-sm hover:scale-110 active:scale-90 transition-transform">
                 <Play className="text-primary-container fill-primary-container" size={32} />
               </button>
-            </div>
+            </div> */}
           </div>
         </div>
       </motion.div>
