@@ -8,13 +8,13 @@ const FEATURES = [
 ] as const;
 
 const CreativeSuite = () => (
-  <div className="max-w-7xl mx-auto px-8 w-full py-20">
-    <div className="text-center mb-20">
+  <div className="max-w-7xl mx-auto px-8 w-full py-8 md:py-20">
+    <div className="text-center mb-8 md:mb-20">
       <motion.h2
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className="text-5xl font-headline font-bold mb-6"
+        className="text-3xl md:text-5xl font-headline font-bold mb-4 md:mb-6"
       >
         The Creative Suite
       </motion.h2>
@@ -36,12 +36,12 @@ const CreativeSuite = () => (
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay }}
-          className="p-10 rounded-2xl bg-surface-container-low border border-outline-variant/10 glow-border flex flex-col items-center text-center group"
+          className="p-6 md:p-10 rounded-2xl bg-surface-container-low border border-outline-variant/10 glow-border flex flex-col items-center text-center group"
         >
-          <div className="w-16 h-16 bg-primary-container/10 rounded-full flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
-            <Icon className="text-primary-container" size={32} />
+          <div className="w-12 h-12 md:w-16 md:h-16 bg-primary-container/10 rounded-full flex items-center justify-center mb-4 md:mb-8 group-hover:scale-110 transition-transform">
+            <Icon className="text-primary-container" size={24} />
           </div>
-          <h3 className="text-2xl font-headline font-bold mb-4">{title}</h3>
+          <h3 className="text-xl md:text-2xl font-headline font-bold mb-2 md:mb-4">{title}</h3>
           <p className="text-on-surface-variant text-sm">{desc}</p>
         </motion.div>
       ))}

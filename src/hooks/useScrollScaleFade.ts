@@ -21,25 +21,27 @@ interface ScrollScaleFade {
 export const useScrollScaleFade = (sectionIndex: number): ScrollScaleFade => {
   const { scrollY } = useScroll();
 
-  const scale = useTransform(scrollY, (v) =>
-    lerp01(
+  const scale = useTransform(scrollY, (v) => {
+    if (window.innerWidth < 768) return 1;
+    return lerp01(
       v,
       sectionIndex * window.innerHeight,
       (sectionIndex + 1) * window.innerHeight,
       1,
       0.95
-    )
-  );
+    );
+  });
 
-  const opacity = useTransform(scrollY, (v) =>
-    lerp01(
+  const opacity = useTransform(scrollY, (v) => {
+    if (window.innerWidth < 768) return 1;
+    return lerp01(
       v,
       sectionIndex * window.innerHeight,
       (sectionIndex + 1) * window.innerHeight,
       1,
       1
-    )
-  );
+    );
+  });
 
   return { scale, opacity };
 };
