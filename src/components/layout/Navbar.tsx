@@ -27,7 +27,7 @@ const Navbar = () => (
         alt=''
         width={32}
         height={32}
-        className='w-42 shrink-0 object-contain'
+        className='w-32 sm:w-42 shrink-0 object-contain'
         aria-hidden
       />
     </button>
