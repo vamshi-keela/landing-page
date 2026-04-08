@@ -57,8 +57,35 @@
 }
 
 @layer base {
+  /* Clip on html avoids body overflow-x:hidden → implicit overflow-y:auto (breaks sticky / double scrollbars). */
+  html {
+    overflow-x: clip;
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-outline-variant) var(--color-surface-container-lowest);
+  }
+
+  html::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  html::-webkit-scrollbar-track {
+    background: var(--color-surface-container-lowest);
+  }
+
+  html::-webkit-scrollbar-thumb {
+    background: var(--color-outline-variant);
+    border-radius: 9999px;
+    border: 2px solid var(--color-surface-container-lowest);
+  }
+
+  html::-webkit-scrollbar-thumb:hover {
+    background: var(--color-outline);
+  }
+
   body {
-    @apply bg-surface text-on-surface font-body selection:bg-primary-container/30 overflow-x-hidden;
+    @apply bg-surface text-on-surface font-body selection:bg-primary-container/30;
   }
 }
 

@@ -1,7 +1,7 @@
 import { motion } from "motion/react";
 import { Z_INDEX } from "../../utils/constants";
 import { useState } from "react";
-import WaitlistModal from "./waitlistmodal";
+import WaitlistModal from './WaitListModal';
 
 const FinalCta = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -22,7 +22,7 @@ const FinalCta = () => {
         <p className="text-on-surface-variant text-sm sm:text-base md:text-lg mb-8 max-w-lg mx-auto">
           Join the elite rank of AI directors and bring your untold stories to life today.
         </p>
-        <button onClick={() => setIsModalOpen(true)} className="bg-primary-container text-on-primary-container px-8 sm:px-12 py-4 sm:py-5 rounded-full font-headline font-bold text-base sm:text-xl tracking-wide hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary-container/30">
+        <button onClick={() => setIsModalOpen(true)} className="bg-primary-container text-on-primary-container px-8 sm:px-12 py-4 sm:py-5 rounded-full font-headline font-bold text-base sm:text-xl tracking-wide hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary-container/30 cursor-pointer">
           Join waitlist
         </button>
       </motion.div>

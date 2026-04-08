@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
 import { useHorizontalScroll } from "../../hooks/useHorizontalScroll";
-import { SECTION_START_VH, Z_INDEX } from "../../utils/constants";
+import { NAVBAR_HEIGHT, SECTION_START_VH, Z_INDEX } from "../../utils/constants";
 
 const GALLERY_ITEMS = [
   {
@@ -41,8 +41,12 @@ const HorizontalGallery = () => {
       className="bg-surface"
     >
       <div
-        style={{ zIndex: Z_INDEX.gallery }}
-        className="sticky top-15 h-screen overflow-hidden bg-surface flex items-center"
+        style={{
+          zIndex: Z_INDEX.gallery,
+          top: NAVBAR_HEIGHT,
+          height: `calc(100vh - ${NAVBAR_HEIGHT}px)`,
+        }}
+        className="sticky overflow-hidden bg-surface flex items-center"
       >
         <motion.div
           ref={containerRef}
@@ -55,7 +59,7 @@ const HorizontalGallery = () => {
           </div>
 
           {GALLERY_ITEMS.map((item) => (
-            <div key={item.title} className="flex-shrink-0 w-80 md:w-96 group">
+            <div key={item.title} className="flex-shrink-0 w-80 sm:w-72 group">
               <div className="relative aspect-[9/16] rounded-xl overflow-hidden mb-4 shadow-2xl">
                 <img
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"

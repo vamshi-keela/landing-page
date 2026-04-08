@@ -7,40 +7,44 @@ interface ScrollScaleFade {
 }
 
 /**
+ * Total scroll span per sticky section (in vh units):
+ * 1vh of content + 0.4vh spacer = 1.4vh.
+ * Must match SPACER_VH (40vh) in StickySection.tsx.
+ */
+const SECTION_SPAN_VH = 1.4;
+
+/**
  * Returns scale and opacity MotionValues driven by window scrollY.
  *
- * @param sectionIndex  1-based index matching SECTION_START_VH:
- *   1 = ScriptToVideo (1×vh → 2×vh)
- *   2 = DirectorMode  (2×vh → 3×vh)
- *   3 = CreativeSuite (3×vh → 4×vh)
+ * @param sectionIndex  1-based index:
+ *   1 = ScriptToVideo, 2 = DirectorMode, 3 = CreativeSuite
  *
- * The section scales from 1 → 0.95 as the NEXT section slides over it.
- * Using window.innerHeight inside the transform fn keeps values accurate
- * after resize without needing extra state or re-subscriptions.
+ * Each section occupies 1.4×vh of scroll (100vh + 40vh spacer).
+ * The scale-out animation runs over the 1×vh window when the NEXT
+ * section slides in from the bottom — identical to the original effect,
+ * just shifted by the spacer's extra scroll distance.
  */
 export const useScrollScaleFade = (sectionIndex: number): ScrollScaleFade => {
   const { scrollY } = useScroll();
 
+  // Section N starts at: hero (1vh) + (N-1) × 1.4vh
+  // Next section enters viewport at: sectionStart + spacer (0.4vh)
+  // Next section pins (covers this one) at: sectionStart + 1.4vh
+  // Scale-out range = [nextEntersViewport, nextPins] = 1vh window
   const scale = useTransform(scrollY, (v) => {
-    if (window.innerWidth < 768) return 1;
-    return lerp01(
-      v,
-      sectionIndex * window.innerHeight,
-      (sectionIndex + 1) * window.innerHeight,
-      1,
-      0.95
-    );
+    const vh = window.innerHeight;
+    const sectionStart = (1 + (sectionIndex - 1) * SECTION_SPAN_VH) * vh;
+    const scaleStart = sectionStart + (SECTION_SPAN_VH - 1) * vh; // after spacer
+    const scaleEnd = sectionStart + SECTION_SPAN_VH * vh; // next section pins
+    return lerp01(v, scaleStart, scaleEnd, 1, 0.95);
   });
 
   const opacity = useTransform(scrollY, (v) => {
-    if (window.innerWidth < 768) return 1;
-    return lerp01(
-      v,
-      sectionIndex * window.innerHeight,
-      (sectionIndex + 1) * window.innerHeight,
-      1,
-      1
-    );
+    const vh = window.innerHeight;
+    const sectionStart = (1 + (sectionIndex - 1) * SECTION_SPAN_VH) * vh;
+    const scaleStart = sectionStart + (SECTION_SPAN_VH - 1) * vh;
+    const scaleEnd = sectionStart + SECTION_SPAN_VH * vh;
+    return lerp01(v, scaleStart, scaleEnd, 1, 1);
   });
 
   return { scale, opacity };

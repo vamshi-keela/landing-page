@@ -3,7 +3,7 @@ import { Sparkles, History as Timeline } from "lucide-react";
 import scriptToVideoImg from "../../assets/images/script-to-video.jpeg";
 
 const ScriptToVideo = () => (
-  <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 md:px-8 py-6 sm:py-10 md:py-20">
+  <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 md:px-8 py-10 sm:py-14 md:py-20">
     <motion.div
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
