@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { motion, useScroll, useTransform } from 'motion/react';
 import { ArrowRight } from 'lucide-react';
 import { FOUNDERS_CALENDLY_URL, Z_INDEX } from '../../utils/constants';
-import WaitlistModal from './WaitListModal';
+import WaitlistModal from './WaitList';
 
 const Hero = () => {
   const sectionRef = useRef<HTMLElement>(null);
