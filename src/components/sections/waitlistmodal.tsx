@@ -127,7 +127,7 @@ const ROLE_OPTIONS = [
     { value: "enterprise", label: "Business Enterprise" },
 ];
 
-const API_URL = "https://screenplay-backend.getinduce.com/public/waitlist/beta";
+const API_URL = "";
 
 interface WaitlistModalProps {
     isOpen: boolean;
