@@ -1,7 +1,7 @@
 import { motion } from "motion/react";
 import { Z_INDEX } from "../../utils/constants";
 import { useState } from "react";
-import WaitlistModal from './WaitList';
+import WaitlistModal from './Wait';
 
 const FinalCta = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
