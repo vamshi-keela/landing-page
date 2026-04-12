@@ -8,10 +8,10 @@ interface ScrollScaleFade {
 
 /**
  * Total scroll span per sticky section (in vh units):
- * 1vh of content + 0.4vh spacer = 1.4vh.
- * Must match SPACER_VH (40vh) in StickySection.tsx.
+ * 1vh of content + 0.8vh spacer = 1.8vh.
+ * Must match SPACER_VH (80vh) in StickySection.tsx.
  */
-const SECTION_SPAN_VH = 1.4;
+const SECTION_SPAN_VH = 1.8;
 
 /**
  * Returns scale and opacity MotionValues driven by window scrollY.

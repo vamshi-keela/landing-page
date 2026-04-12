@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { motion, useScroll, useTransform } from 'motion/react';
 import { ArrowRight } from 'lucide-react';
 import { FOUNDERS_CALENDLY_URL, Z_INDEX } from '../../utils/constants';
-import WaitlistModal from './WaitList';
+import WaitlistModal from './WaitListModal';
 
 const Hero = () => {
   const sectionRef = useRef<HTMLElement>(null);
@@ -33,16 +33,16 @@ const Hero = () => {
 
       <motion.div
         style={{ y: contentY, opacity: contentOpacity }}
-        className='relative z-10 max-w-7xl mx-auto px-8 text-center'
+        className='relative z-10 max-w-7xl mx-auto px-6 md:px-8 text-center pt-20 md:pt-0'
       >
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className='inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-outline-variant/30 bg-surface-container-low/50 backdrop-blur-md mb-8'
+          className='inline-flex items-center gap-2 px-3 md:px-4 py-1.5 rounded-full border border-outline-variant/30 bg-surface-container-low/50 backdrop-blur-md mb-4 md:mb-8'
         >
           <span className='w-2 h-2 rounded-full bg-primary-container animate-pulse' />
-          <span className='text-xs font-label uppercase tracking-[0.2em] text-on-surface-variant'>
+          <span className='text-[10px] md:text-xs font-label uppercase tracking-[0.2em] text-on-surface-variant'>
             The AI Media Infrastructure
           </span>
         </motion.div>
@@ -50,7 +50,7 @@ const Hero = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.1 }}
-          className='text-6xl md:text-8xl font-headline font-bold tracking-tighter mb-8 leading-[0.9] text-on-surface'
+          className='text-4xl sm:text-5xl md:text-8xl font-headline font-bold tracking-tighter mb-4 md:mb-8 leading-[0.9] text-on-surface'
         >
           Write your vision.
           <br />
@@ -60,7 +60,7 @@ const Hero = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className='text-on-surface-variant text-lg md:text-xl max-w-2xl mx-auto mb-12 font-light leading-relaxed'
+          className='text-on-surface-variant text-base md:text-xl max-w-2xl mx-auto mb-8 md:mb-12 font-light leading-relaxed'
         >
           Translate raw script data into hyper-realistic cinematic experiences.
           Script-to-video technology meets granular directorial control.
@@ -69,20 +69,20 @@ const Hero = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
-          className='flex flex-col md:flex-row items-center justify-center gap-6'
+          className='flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6'
         >
           <a
             href={FOUNDERS_CALENDLY_URL}
             target='_blank'
             rel='noopener noreferrer'
-            className='bg-primary-container text-on-primary-container px-10 py-5 rounded-full font-headline font-bold text-lg tracking-wide hover:scale-105 active:scale-95 transition-all duration-300 group inline-flex items-center justify-center gap-3 shadow-2xl shadow-primary-container/40'
+            className='bg-primary-container text-on-primary-container px-8 md:px-10 py-4 md:py-5 rounded-full font-headline font-bold text-base md:text-lg tracking-wide hover:scale-105 active:scale-95 transition-all duration-300 group inline-flex items-center justify-center gap-3 shadow-2xl shadow-primary-container/40 min-w-64'
           >
             Talk To Founders
             <ArrowRight className='group-hover:translate-x-1 transition-transform' />
           </a>
           <button
             onClick={() => setIsModalOpen(true)}
-            className='glass-card text-on-surface px-10 py-5 rounded-full font-headline font-bold text-lg tracking-wide hover:bg-on-surface/5 hover:scale-105 active:scale-95 transition-all cursor-pointer'
+            className='glass-card text-on-surface px-8 md:px-10 py-4 md:py-5 rounded-full font-headline font-bold text-base md:text-lg tracking-wide hover:bg-on-surface/5 hover:scale-105 active:scale-95 transition-all cursor-pointer min-w-64'
           >
             Join Waitlist
           </button>

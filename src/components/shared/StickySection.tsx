@@ -17,18 +17,21 @@ const Z_BY_INDEX: Record<1 | 2 | 3, number> = { 1: 20, 2: 30, 3: 40 };
 
 /** Extra scroll distance (in vh) after each sticky section — the section
  *  stays pinned during this zone, giving it breathing room before the
- *  next section slides in. */
-const SPACER_VH = 40;
+ *  next section slides in.
+ *
+ *  Increased from 40vh to 80vh to prevent fast-scroll / momentum-scroll
+ *  from skipping past sections on both desktop and mobile. */
+const SPACER_VH = 80;
 
 /** Scroll span per section in vh units (1vh content + spacer). */
-const SECTION_SPAN_VH = 1 + SPACER_VH / 100; // 1.4
+const SECTION_SPAN_VH = 1 + SPACER_VH / 100; // 1.8
 
 /**
  * Wraps a section in a sticky container with scroll-driven scale + opacity.
  *
  * The `<motion.section>` is returned as a direct child of `<main>` (via
  * fragment) so `position: sticky` is constrained by `<main>`, NOT by a
- * wrapper div. A spacer div after it adds 40vh of extra scroll distance
+ * wrapper div. A spacer div after it adds extra scroll distance
  * where the section lingers before the next one appears.
  *
  * On mobile, `overflow-y: auto` is only enabled once the section is
@@ -36,12 +39,6 @@ const SECTION_SPAN_VH = 1 + SPACER_VH / 100; // 1.4
  * so touch events fall through to the page scroll — preventing the
  * issue where scrolling within a partially-visible section would
  * scroll its internal content instead of bringing it fully into view.
- *
- * Design decisions:
- * - `top-0 h-screen` keeps each section covering the full viewport,
- *   required for the "slide-over" stacking illusion.
- * - `paddingTop: NAVBAR_HEIGHT` pushes inner content below the fixed navbar.
- * - `bg-surface overflow-hidden` ensures solid background coverage.
  */
 const StickySection = ({ index, children }: StickySectionProps) => {
   const { scale, opacity } = useScrollScaleFade(index);
@@ -50,7 +47,7 @@ const StickySection = ({ index, children }: StickySectionProps) => {
   useEffect(() => {
     const checkPinned = () => {
       const vh = window.innerHeight;
-      // Section N document position = hero (1vh) + (N-1) × 1.4vh
+      // Section N document position = hero (1vh) + (N-1) × SECTION_SPAN_VH
       const sectionStart = (1 + (index - 1) * SECTION_SPAN_VH) * vh;
       setIsPinned(window.scrollY >= sectionStart - 2); // 2px tolerance
     };

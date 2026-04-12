@@ -25,7 +25,6 @@ const Footer = () => {
   const [typed, setTyped] = useState("");
   const startedRef = useRef(false);
   const doneTyping = typed.length >= WORDMARK.length;
-  const [overlayRect, setOverlayRect] = useState<{ width: number; left: number } | null>(null);
 
   // Re-measure text span width whenever typed changes
   useLayoutEffect(() => {
@@ -35,7 +34,6 @@ const Footer = () => {
     const measure = () => {
       const sr = span.getBoundingClientRect();
       const cr = container.getBoundingClientRect();
-      setOverlayRect({ width: sr.width, left: sr.left - cr.left });
     };
     measure();
     const ro = new ResizeObserver(measure);
@@ -87,8 +85,8 @@ const Footer = () => {
       className="relative bg-[#0e0e0e] w-full border-t border-white/5 overflow-hidden"
     >
       {/* Top strip — links, socials + copyright */}
-      <div className="max-w-7xl mx-auto px-8 sm:px-12 pt-16 pb-10 flex flex-col sm:flex-row items-center justify-between gap-6">
-        <div className="flex items-center gap-8">
+      <div className="max-w-7xl mx-auto px-6 sm:px-12 pt-16 pb-10 flex flex-col sm:flex-row items-center justify-between gap-6">
+        <div className="flex items-center gap-6">
           <a
             href="https://getinduce.com/privacy-policy.html"
             className="font-mono text-[10px] tracking-[0.18em] text-white/30 hover:text-primary-container uppercase transition-colors"
@@ -155,20 +153,6 @@ const Footer = () => {
         style={{ height: "calc(clamp(5rem, 22vw, 20rem) * 0.8)" }}
         aria-hidden="true"
       >
-        {/* Sun glow overlay — behind text, exact text width, no extra left space */}
-        {overlayRect && (
-          <div
-            className="absolute bottom-0 pointer-events-none overflow-hidden"
-            style={{
-              left: overlayRect.left + 10,
-              width: overlayRect.width,
-              height: "60%",
-              background: "radial-gradient(ellipse 70% 90% at 50% 100%, var(--color-primary-container) 0%, transparent 80%)",
-              opacity: 0.4,
-              zIndex: 0,
-            }}
-          />
-        )}
         <p
           ref={lineRef}
           className="font-headline font-black leading-none tracking-tighter text-white/5 text-center absolute inset-x-0 top-0"

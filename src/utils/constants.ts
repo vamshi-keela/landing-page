@@ -14,19 +14,19 @@ export const NAVBAR_HEIGHT =
 export const FOUNDERS_CALENDLY_URL = 'https://calendly.com/cameoo-kmb';
 
 /**
- * Document scroll layout — each sticky section occupies 1.4×vh
- * (100vh content + 40vh spacer for breathing room).
+ * Document scroll layout — each sticky section occupies 1.8×vh
+ * (100vh content + 80vh spacer for breathing room).
  *   0×vh  → 1×vh    : Hero
- *   1×vh  → 2.4×vh  : ScriptToVideo  (sticky, z-20, incl. 40vh spacer)
- *   2.4×vh → 3.8×vh : DirectorMode   (sticky, z-30, incl. 40vh spacer)
- *   3.8×vh → 5.2×vh : CreativeSuite  (sticky, z-40, incl. 40vh spacer)
- *   5.2×vh → ...    : HorizontalGallery inner sticky (z-50)
+ *   1×vh  → 2.8×vh  : ScriptToVideo  (sticky, z-20, incl. 80vh spacer)
+ *   2.8×vh → 4.6×vh : DirectorMode   (sticky, z-30, incl. 80vh spacer)
+ *   4.6×vh → 6.4×vh : CreativeSuite  (sticky, z-40, incl. 80vh spacer)
+ *   6.4×vh → ...    : HorizontalGallery inner sticky (z-50)
  */
 export const SECTION_START_VH: Record<string, number> = {
   scriptToVideo: 1,
-  directorMode: 2.4,
-  creativeSuite: 3.8,
-  gallery: 5.2,
+  directorMode: 2.8,
+  creativeSuite: 4.6,
+  gallery: 6.4,
 };
 
 export const Z_INDEX: Record<string, number> = {

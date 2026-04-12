@@ -13,6 +13,7 @@ import CreativeSuite from "./components/sections/CreativeSuite";
 import HorizontalGallery from "./components/sections/HorizontalGallery";
 import FinalCta from "./components/sections/FinalCta";
 import StickySection from "./components/shared/StickySection";
+import { useScrollDamper } from "./hooks/useScrollDamper";
 
 /**
  * App — scroll layout:
@@ -29,6 +30,8 @@ import StickySection from "./components/shared/StickySection";
  * creating a scroll container — preserving correct sticky behavior.
  */
 export default function App() {
+  useScrollDamper();
+
   return (
     <div
       className="bg-surface text-on-surface font-body selection:bg-primary-container/30"
