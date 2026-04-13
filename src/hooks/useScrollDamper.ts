@@ -9,19 +9,39 @@ import { useEffect } from "react";
  * (their "starting point") before the user moves to the previous one.
  *
  * Approach:
- * Track signed scroll velocity. When a fast fling crosses a section
- * start snap point, interrupt the browser's momentum scroll and
- * smooth-scroll back to that snap point. A short cooldown prevents
- * re-triggering while the programmatic scroll is still running.
+ * Track signed scroll velocity. When a fast fling FIRST crosses a
+ * section-start snap point, immediately interrupt the browser's
+ * momentum and smooth-scroll to that point.
+ *
+ * Critical design constraints that informed every decision:
+ *
+ * 1. NO snapTimer / clearTimeout retry loop.
+ *    During a fast fling, scroll events fire every 5–16 ms. If we
+ *    use a delayed timer and cancel it on each new event, the snap
+ *    for crossing section-2 gets cancelled by the event that crosses
+ *    section-1, which itself gets cancelled — net result: nothing
+ *    fires and the user flies past all sections to Hero.
+ *    Fix: call doSnap() immediately on the FIRST crossing, then
+ *    enter a cooldown so subsequent events are ignored.
+ *
+ * 2. Strict `prevY > sp` (not >=) for upward crossings.
+ *    After snapping to exactly sp=2520, the next fling starts with
+ *    prevY === 2520. The condition `prevY >= sp` would be true again,
+ *    causing us to snap back to 2520 indefinitely.
+ *    Fix: strict greater-than so the user can leave a snap point.
+ *
+ * 3. Always update lastY / lastTime even during cooldown.
+ *    If we block all updates during cooldown, the first event after
+ *    cooldown computes velocity from a stale baseline, producing a
+ *    wrong direction and/or wrong velocity.
+ *    Fix: track position on every event; only skip the snap logic.
  *
  * This handles BOTH directions:
  *   - Scrolling DOWN fast: stops at the first section it enters.
- *   - Scrolling UP fast: stops at the highest section start it just
- *     crossed, so each component reaches scale:1 before leaving.
+ *   - Scrolling UP fast: stops at the highest section start crossed,
+ *     so each component reaches scale:1 before the user moves up.
  *
- * On desktop (non-touch, ≥1024px) this hook does nothing — the
- * SPACER_VH in StickySection provides enough dwell time for mouse
- * or trackpad users.
+ * On desktop (non-touch, ≥1024px) this hook does nothing.
  */
 
 /** Must match StickySection.tsx / useScrollScaleFade.ts */
@@ -32,10 +52,10 @@ const NUM_SECTIONS = 3;
 const VELOCITY_THRESHOLD = 2500;
 
 /**
- * Milliseconds to ignore new scroll events after we fire a programmatic
- * snap, so our own smooth-scroll doesn't re-trigger the logic.
+ * How long (ms) to ignore new crossings after a programmatic snap fires,
+ * so our own smooth-scroll doesn't re-trigger the logic.
  */
-const SNAP_COOLDOWN_MS = 700;
+const SNAP_COOLDOWN_MS = 750;
 
 export function useScrollDamper() {
   useEffect(() => {
@@ -43,11 +63,8 @@ export function useScrollDamper() {
       "ontouchstart" in window || navigator.maxTouchPoints > 0;
     const isSmallScreen = window.innerWidth < 1024;
 
-    // Only activate on touch or small screens
     if (!isTouchDevice && !isSmallScreen) return;
 
-    // Precompute snap points: the scroll-Y where each sticky section
-    // first pins (i.e. where its component is at full scale:1).
     const computeSnapPoints = (): number[] => {
       const vh = window.innerHeight;
       return Array.from({ length: NUM_SECTIONS }, (_, i) =>
@@ -58,7 +75,6 @@ export function useScrollDamper() {
     let snapPoints = computeSnapPoints();
     let lastY = window.scrollY;
     let lastTime = performance.now();
-    let snapTimer: ReturnType<typeof setTimeout>;
     let cooldownTimer: ReturnType<typeof setTimeout>;
     let inCooldown = false;
 
@@ -68,65 +84,71 @@ export function useScrollDamper() {
 
     /**
      * Interrupt browser momentum then smooth-scroll to `target`.
-     * Calling scrollTo(x,y) (non-smooth) is the standard technique
-     * for stopping iOS/Android momentum before a programmatic scroll.
+     * window.scrollTo(x, y) (non-smooth, synchronous) is the
+     * standard technique for stopping iOS/Android momentum before
+     * a programmatic scroll begins.
      */
     const doSnap = (target: number) => {
       inCooldown = true;
       clearTimeout(cooldownTimer);
+
       // Stop momentum at current position
       window.scrollTo(0, window.scrollY);
+
       // One rAF so the browser processes the stop before we re-scroll
       requestAnimationFrame(() => {
         window.scrollTo({ top: target, behavior: "smooth" });
       });
+
       cooldownTimer = setTimeout(() => {
         inCooldown = false;
+        // Reset baseline so the first post-cooldown event has an
+        // accurate prevY and velocity reading.
+        lastY = window.scrollY;
+        lastTime = performance.now();
       }, SNAP_COOLDOWN_MS);
     };
 
     const onScroll = () => {
-      // Don't re-trigger while our own smooth-scroll is running
-      if (inCooldown) return;
-
       const now = performance.now();
       const dt = now - lastTime;
       const currentY = window.scrollY;
       const signedDy = currentY - lastY;
-
       const prevY = lastY;
+
+      // Always keep position tracking current — even during cooldown.
+      // If we skip this, the first event after cooldown has a stale
+      // prevY and computes the wrong direction / velocity.
       lastY = currentY;
       lastTime = now;
 
+      // Snap logic is suppressed while our smooth-scroll is running.
+      if (inCooldown) return;
       if (dt <= 0) return;
 
       const velocity = (Math.abs(signedDy) / dt) * 1000; // px/s
       if (velocity < VELOCITY_THRESHOLD) return;
 
       const goingUp = signedDy < 0;
-      clearTimeout(snapTimer);
 
-      // When going UP, check snap points from highest → lowest so we
-      // always stop at the topmost one we just flew through.
-      // When going DOWN, check lowest → highest for the same reason.
+      // Check highest → lowest when going up so we stop at the
+      // topmost section first. Lowest → highest for going down.
       const ordered = goingUp ? [...snapPoints].reverse() : snapPoints;
-      let crossedSnap: number | null = null;
 
       for (const sp of ordered) {
         const justCrossed = goingUp
-          ? prevY >= sp && currentY < sp // flew upward past sp
-          : prevY <= sp && currentY > sp; // flew downward past sp
+          // Strict `>` (not `>=`): after snapping to sp, prevY === sp.
+          // Using >= would immediately re-snap the user back to sp on
+          // the next fling, making it impossible to scroll past it.
+          ? prevY > sp && currentY < sp
+          : prevY < sp && currentY > sp;
 
         if (justCrossed) {
-          crossedSnap = sp;
-          break; // Only handle the first crossing per scroll event
+          // Fire immediately — no setTimeout. A delayed timer would be
+          // cancelled by the next scroll event before it could fire.
+          doSnap(sp);
+          return; // inCooldown is now true; subsequent events ignored
         }
-      }
-
-      if (crossedSnap !== null) {
-        const target = crossedSnap;
-        // Short delay so the current scroll event cycle finishes first
-        snapTimer = setTimeout(() => doSnap(target), 30);
       }
     };
 
@@ -134,7 +156,6 @@ export function useScrollDamper() {
     window.addEventListener("resize", onResize, { passive: true });
 
     return () => {
-      clearTimeout(snapTimer);
       clearTimeout(cooldownTimer);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
