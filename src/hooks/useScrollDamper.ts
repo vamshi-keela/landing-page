@@ -10,17 +10,11 @@ import { useEffect } from "react";
  * zone" (the spacer region), it limits how fast `scrollY` can advance
  * by interpolating toward the target rather than jumping.
  *
- * How it works:
- * - On each `scroll` event, we compute how far into the page the user is.
- * - If the current scroll position is within a sticky section's range,
- *   and the delta since the last frame is above a threshold, we
- *   override the scroll position with a damped version.
- * - This preserves the natural feel for slow/normal scrolling, only
- *   kicking in for fast flicks.
- *
- * The hook is passive-safe: it uses `{ passive: false }` only on the
- * wheel event (where `preventDefault` is needed), and `{ passive: true }`
- * on touch events where we only record velocity.
+ * Performance fix: the old version called `window.scrollTo()` in a tight
+ * rAF loop, which fought the browser's native compositor-driven scroll
+ * and forced scroll processing back to the main thread. The new version
+ * uses a single rAF per scroll event and avoids recursive rAF chains,
+ * reducing contention with the compositor.
  */
 
 /** Must match StickySection.tsx / useScrollScaleFade.ts */
@@ -32,14 +26,18 @@ interface SectionBounds {
   end: number;   // px
 }
 
-function getSectionBounds(vh: number): SectionBounds[] {
-  const bounds: SectionBounds[] = [];
+/** Cached section bounds — recomputed on resize. */
+let cachedBounds: SectionBounds[] = [];
+let cachedVh = 0;
+
+function recomputeBounds() {
+  cachedVh = window.innerHeight;
+  cachedBounds = [];
   for (let i = 0; i < NUM_SECTIONS; i++) {
-    const start = (1 + i * SECTION_SPAN_VH) * vh;
-    const end = start + SECTION_SPAN_VH * vh;
-    bounds.push({ start, end });
+    const start = (1 + i * SECTION_SPAN_VH) * cachedVh;
+    const end = start + SECTION_SPAN_VH * cachedVh;
+    cachedBounds.push({ start, end });
   }
-  return bounds;
 }
 
 /**
@@ -48,9 +46,7 @@ function getSectionBounds(vh: number): SectionBounds[] {
  * On mobile (smaller vh), we use a slightly higher ratio.
  */
 function getMaxDelta(): number {
-  const vh = window.innerHeight;
-  // Allow faster scrolling on desktop (larger viewports)
-  return Math.max(12, vh * 0.025);
+  return Math.max(12, cachedVh * 0.025);
 }
 
 export function useScrollDamper() {
@@ -63,11 +59,15 @@ export function useScrollDamper() {
 
     if (!isTouchDevice && !isSmallScreen) return;
 
+    recomputeBounds();
+    window.addEventListener("resize", recomputeBounds, { passive: true });
+
     let lastScrollY = window.scrollY;
-    let ticking = false;
+    let rafId: number | null = null;
     let isActive = true;
 
     const dampen = () => {
+      rafId = null;
       if (!isActive) return;
 
       const currentY = window.scrollY;
@@ -76,32 +76,26 @@ export function useScrollDamper() {
       const maxDelta = getMaxDelta();
 
       if (absDelta > maxDelta) {
-        const vh = window.innerHeight;
-        const bounds = getSectionBounds(vh);
-        const isInSection = bounds.some(
+        const isInSection = cachedBounds.some(
           (b) => currentY >= b.start && currentY <= b.end
         );
 
         if (isInSection) {
-          // Clamp the scroll position
           const clampedDelta = Math.sign(delta) * maxDelta;
           const dampedY = lastScrollY + clampedDelta;
           window.scrollTo({ top: dampedY, behavior: "instant" as ScrollBehavior });
           lastScrollY = dampedY;
-          // Keep requesting frames until scroll settles
-          requestAnimationFrame(dampen);
-          return;
+          return; // Don't chain another rAF — the scrollTo will fire a new
+                  // scroll event, which will schedule the next dampen naturally.
         }
       }
 
       lastScrollY = currentY;
-      ticking = false;
     };
 
     const onScroll = () => {
-      if (!ticking) {
-        ticking = true;
-        requestAnimationFrame(dampen);
+      if (rafId === null) {
+        rafId = requestAnimationFrame(dampen);
       }
     };
 
@@ -109,7 +103,9 @@ export function useScrollDamper() {
 
     return () => {
       isActive = false;
+      if (rafId !== null) cancelAnimationFrame(rafId);
       window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", recomputeBounds);
     };
   }, []);
 }
