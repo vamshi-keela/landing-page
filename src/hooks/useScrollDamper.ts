@@ -83,27 +83,20 @@ export function useScrollDamper() {
     };
 
     /**
-     * Interrupt browser momentum then smooth-scroll to `target`.
-     * window.scrollTo(x, y) (non-smooth, synchronous) is the
-     * standard technique for stopping iOS/Android momentum before
-     * a programmatic scroll begins.
+     * Smooth-scroll to `target`, interrupting any in-flight momentum.
+     *
+     * On iOS Safari and Android Chrome, calling window.scrollTo with
+     * behavior:"smooth" during a momentum scroll natively cancels the
+     * momentum and starts the programmatic scroll — no need for the
+     * old two-step "instant stop → rAF → smooth" pattern, which was
+     * the source of the visible hitch before this change.
      */
     const doSnap = (target: number) => {
       inCooldown = true;
       clearTimeout(cooldownTimer);
-
-      // Stop momentum at current position
-      window.scrollTo(0, window.scrollY);
-
-      // One rAF so the browser processes the stop before we re-scroll
-      requestAnimationFrame(() => {
-        window.scrollTo({ top: target, behavior: "smooth" });
-      });
-
+      window.scrollTo({ top: target, behavior: "smooth" });
       cooldownTimer = setTimeout(() => {
         inCooldown = false;
-        // Reset baseline so the first post-cooldown event has an
-        // accurate prevY and velocity reading.
         lastY = window.scrollY;
         lastTime = performance.now();
       }, SNAP_COOLDOWN_MS);

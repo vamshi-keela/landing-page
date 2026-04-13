@@ -16,6 +16,21 @@ import StickySection from "./components/shared/StickySection";
 import { useScrollDamper } from "./hooks/useScrollDamper";
 
 /**
+ * Zero-height invisible div that registers a CSS scroll-snap anchor at its
+ * exact DOM position. Because html already has `scroll-snap-type: y proximity`
+ * in index.css, placing one of these directly before a section activates the
+ * browser's compositor-level native snapping for normal-speed scrolls — zero
+ * JS, zero lag. The JS damper in useScrollDamper covers fast flings that
+ * overshoot the proximity zone.
+ */
+const SnapAnchor = () => (
+  <div
+    aria-hidden="true"
+    style={{ height: 0, overflow: "visible", scrollSnapAlign: "start", scrollMarginTop: 0 }}
+  />
+);
+
+/**
  * App — scroll layout:
  *
  *   0×vh → 1×vh  : Hero           (parallax, z-10)
@@ -41,15 +56,19 @@ export default function App() {
       <Navbar />
       <main>
         <Hero />
+        <SnapAnchor />
         <StickySection index={1}>
           <ScriptToVideo />
         </StickySection>
+        <SnapAnchor />
         <StickySection index={2}>
           <DirectorMode />
         </StickySection>
+        <SnapAnchor />
         <StickySection index={3}>
           <CreativeSuite />
         </StickySection>
+        <SnapAnchor />
         <HorizontalGallery />
         <FinalCta />
       </main>
