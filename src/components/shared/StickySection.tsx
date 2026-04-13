@@ -15,56 +15,66 @@ interface StickySectionProps {
 
 const Z_BY_INDEX: Record<1 | 2 | 3, number> = { 1: 20, 2: 30, 3: 40 };
 
-/** Extra scroll distance (in vh) after each sticky section — the section
- *  stays pinned during this zone, giving it breathing room before the
- *  next section slides in.
- *
- *  Increased from 40vh to 80vh to prevent fast-scroll / momentum-scroll
- *  from skipping past sections on both desktop and mobile. */
+/** Extra scroll distance (in vh) after each sticky section. */
 const SPACER_VH = 80;
 
 /** Scroll span per section in vh units (1vh content + spacer). */
 const SECTION_SPAN_VH = 1 + SPACER_VH / 100; // 1.8
 
+/** Module-level cached vh — updated on resize, never read inside scroll. */
+let cachedVh = typeof window !== "undefined" ? window.innerHeight : 900;
+let vhListenerCount = 0;
+
+function onVhResize() {
+  cachedVh = window.innerHeight;
+}
+
 /**
  * Wraps a section in a sticky container with scroll-driven scale + opacity.
  *
- * Performance fix: the old version used `useState` + a `scroll` listener to
- * toggle `overflow-y` via a class swap. That caused a full React re-render on
- * every scroll frame (×3 sections), which was a major contributor to frame
- * drops during fast scrolling.
- *
- * The new version uses a ref + direct DOM mutation (`classList.toggle`) inside
- * a passive scroll listener. This bypasses React's reconciliation entirely,
- * applying the same visual change as a pure DOM operation that the browser can
- * batch with its own scroll compositing.
+ * Performance:
+ * - Uses cached viewport height (no per-frame `window.innerHeight`).
+ * - Uses direct DOM classList.toggle instead of React state.
+ * - Adds `will-change: transform` to promote to compositor layer.
  */
 const StickySection = ({ index, children }: StickySectionProps) => {
   const { scale, opacity } = useScrollScaleFade(index);
   const sectionEl = useRef<HTMLElement>(null);
 
   useEffect(() => {
+    // Ref-count the shared resize listener
+    if (vhListenerCount === 0) {
+      cachedVh = window.innerHeight;
+      window.addEventListener("resize", onVhResize, { passive: true });
+    }
+    vhListenerCount++;
+
     const el = sectionEl.current;
     if (!el) return;
 
+    let wasPinned = false;
+
     const checkPinned = () => {
-      const vh = window.innerHeight;
-      const sectionStart = (1 + (index - 1) * SECTION_SPAN_VH) * vh;
+      const sectionStart = (1 + (index - 1) * SECTION_SPAN_VH) * cachedVh;
       const pinned = window.scrollY >= sectionStart - 2;
 
-      // Direct DOM mutation — no React re-render.
-      // Toggle between overflow-y:auto and overflow-y:hidden on mobile.
-      el.classList.toggle("max-md:overflow-y-auto", pinned);
-      el.classList.toggle("max-md:overflow-y-hidden", !pinned);
+      // Only touch the DOM if the state actually changed.
+      if (pinned !== wasPinned) {
+        wasPinned = pinned;
+        el.classList.toggle("max-md:overflow-y-auto", pinned);
+        el.classList.toggle("max-md:overflow-y-hidden", !pinned);
+      }
     };
 
     window.addEventListener("scroll", checkPinned, { passive: true });
-    window.addEventListener("resize", checkPinned, { passive: true });
     checkPinned();
 
     return () => {
+      vhListenerCount--;
+      if (vhListenerCount === 0) {
+        window.removeEventListener("resize", onVhResize);
+      }
       window.removeEventListener("scroll", checkPinned);
-      window.removeEventListener("resize", checkPinned);
     };
   }, [index]);
 

@@ -8,6 +8,25 @@ interface HorizontalScroll {
 }
 
 /**
+ * Module-level cached viewport height — shared with useScrollScaleFade.
+ * Updated on resize only (not per scroll frame).
+ */
+let cachedVh = typeof window !== "undefined" ? window.innerHeight : 900;
+
+function onResize() {
+  cachedVh = window.innerHeight;
+}
+
+// Single shared resize listener
+let listenerRegistered = false;
+function ensureResizeListener() {
+  if (!listenerRegistered && typeof window !== "undefined") {
+    window.addEventListener("resize", onResize, { passive: true });
+    listenerRegistered = true;
+  }
+}
+
+/**
  * Drives a horizontal gallery that pins and pans as the user scrolls vertically.
  *
  * @param sectionStartVh  The viewport-height multiple at which the gallery's
@@ -23,12 +42,12 @@ interface HorizontalScroll {
  */
 export const useHorizontalScroll = (sectionStartVh: number): HorizontalScroll => {
   const containerRef = useRef<HTMLDivElement>(null);
-  // Ref (not state) so transform fn always reads the latest value without
-  // stale closure issues.
   const scrollDistRef = useRef(1400);
   const [outerHeight, setOuterHeight] = useState(1400);
 
   useEffect(() => {
+    ensureResizeListener();
+
     const measure = () => {
       if (!containerRef.current) return;
       const dist = Math.max(1, containerRef.current.scrollWidth - window.innerWidth);
@@ -44,7 +63,7 @@ export const useHorizontalScroll = (sectionStartVh: number): HorizontalScroll =>
   const { scrollY } = useScroll();
 
   const x = useTransform(scrollY, (v) => {
-    const vh = window.innerHeight;
+    const vh = cachedVh;
     const sd = scrollDistRef.current;
     const start = sectionStartVh * vh;
     const end = start + sd;

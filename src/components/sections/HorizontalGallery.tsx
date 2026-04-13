@@ -50,7 +50,7 @@ const HorizontalGallery = () => {
       >
         <motion.div
           ref={containerRef}
-          style={{ x }}
+          style={{ x, willChange: "transform" }}
           className="flex gap-12 px-[10vw] flex-nowrap"
         >
           <div className="flex-shrink-0 w-[500px] flex flex-col justify-center">
@@ -66,6 +66,8 @@ const HorizontalGallery = () => {
                   src={item.img}
                   alt={item.title}
                   referrerPolicy="no-referrer"
+                  loading="lazy"
+                  decoding="async"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent flex flex-col justify-end p-6">
                   <span className="text-xs font-label text-primary-container mb-1 uppercase tracking-widest">
