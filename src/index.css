@@ -60,6 +60,7 @@
   /* Clip on html avoids body overflow-x:hidden → implicit overflow-y:auto (breaks sticky / double scrollbars). */
   html {
     overflow-x: clip;
+    scroll-snap-type: y proximity;
     scrollbar-gutter: stable;
     scrollbar-width: thin;
     scrollbar-color: var(--color-outline-variant) var(--color-surface-container-lowest);
