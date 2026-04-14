@@ -71,27 +71,29 @@ export function useScrollDamper() {
     if (!isTouchDevice && !isSmallScreen) return;
 
     /**
-     * DOWN snap points — section ends.
-     * (1 + (i+1) * SECTION_SPAN_VH) * vh  for i = 0..NUM_SECTIONS-1
-     *   = [2.8, 4.6, 6.4] × vh  = [2520, 4140, 5760] at 900 px viewport
+     * DOWN snap points — every section boundary (start AND end).
+     * (1 + i * SECTION_SPAN_VH) * vh  for i = 0..NUM_SECTIONS   (inclusive)
+     *   = [1.0, 2.8, 4.6, 6.4] × vh  = [900, 2520, 4140, 5760] at 900 px
      *
-     * These are the positions where the current section has fully scaled
-     * out (scale = 0.95) and the next section is starting.
+     * Includes section STARTS (900, 2520, 4140) so each component gets to
+     * "spin up" — appear at scale:1 with heading visible and internal scroll
+     * ready — before the fling can continue to the section's END.
+     * Also includes the gallery start (5760) as the final down checkpoint.
      */
     const computeDownSnapPoints = (): number[] => {
       const vh = window.innerHeight;
-      return Array.from({ length: NUM_SECTIONS }, (_, i) =>
-        (1 + (i + 1) * SECTION_SPAN_VH) * vh
+      return Array.from({ length: NUM_SECTIONS + 1 }, (_, i) =>
+        (1 + i * SECTION_SPAN_VH) * vh
       );
     };
 
     /**
-     * UP snap points — section starts.
+     * UP snap points — section starts only.
      * (1 + i * SECTION_SPAN_VH) * vh  for i = 0..NUM_SECTIONS-1
      *   = [1.0, 2.8, 4.6] × vh  = [900, 2520, 4140] at 900 px viewport
      *
-     * These are the positions where the section is at full scale (= 1)
-     * with its heading visible.
+     * When scrolling up from the gallery, skips the 5760 intermediate stop
+     * and snaps directly to CreativeSuite's start (4140) in one swipe.
      */
     const computeUpSnapPoints = (): number[] => {
       const vh = window.innerHeight;
