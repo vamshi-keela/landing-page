@@ -57,13 +57,25 @@
 }
 
 @layer base {
+
   /* Clip on html avoids body overflow-x:hidden → implicit overflow-y:auto (breaks sticky / double scrollbars). */
   html {
     overflow-x: clip;
-    scroll-snap-type: y proximity;
+    -webkit-overflow-scrolling: touch;
     scrollbar-gutter: stable;
     scrollbar-width: thin;
     scrollbar-color: var(--color-outline-variant) var(--color-surface-container-lowest);
+  }
+
+  /*
+   * scroll-snap-type conflicts with position:sticky on iOS Safari,
+   * causing bouncing/jitter. Only enable on non-touch devices.
+   * Touch devices use the JS useScrollDamper instead.
+   */
+  @media (hover: hover) and (pointer: fine) {
+    html {
+      scroll-snap-type: y proximity;
+    }
   }
 
   html::-webkit-scrollbar {
@@ -107,7 +119,9 @@
   }
 
   @keyframes shimmer {
-    to { background-position: 200% center; }
+    to {
+      background-position: 200% center;
+    }
   }
 
   .no-scrollbar::-webkit-scrollbar {

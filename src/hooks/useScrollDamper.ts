@@ -1,66 +1,50 @@
 import { useEffect } from "react";
 
 /**
- * Section-aware scroll-velocity damper (touch / small-screen only).
+ * Section-aware scroll-velocity damper (touch devices only).
  *
- * Direction-aware snap points
- * ──────────────────────────
- * Scrolling DOWN  →  snap at section ENDS   [2520, 4140, 5760] px
- *   Each section must "reach its end" (scale → 0.95, next section starting)
- *   before the fling can continue.  No snap at section STARTS going down —
- *   the user can naturally slide in and see the section at full scale.
+ * Problem: On iOS, momentum scrolling flings through hundreds of vh
+ * in one gesture, skipping sticky sections entirely.
  *
- * Scrolling UP    →  snap at section STARTS [900, 2520, 4140] px
- *   Each section must "reach its start" (scale = 1, heading visible) before
- *   the fling can continue upward to the previous section.
+ * iOS-specific challenges addressed:
  *
- * Why two different arrays?
- *   A section END equals the NEXT section's START (they share the same
- *   scroll position — e.g. 2520px is ScriptToVideo's exit point AND
- *   DirectorMode's entry point).  Using a single shared array would
- *   mis-snap going down: it would stop at 900 (ScriptToVideo's start)
- *   instead of letting the user scroll in, then stop at 2520 (its end).
+ * 1. `window.scrollTo({ behavior: "smooth" })` is unreliable during
+ *    momentum — iOS Safari often ignores it or lets the momentum
+ *    overwrite it immediately. Fix: use a manual rAF-based eased
+ *    animation with `behavior: "instant"` per frame.
  *
- * Critical design constraints
- * ───────────────────────────
- * 1. Momentum must be stopped before smooth-scrolling to target.
- *    Without the instant scrollTo(0, y) call first, momentum continues
- *    during the 750 ms cooldown and silently carries the page past the
- *    next snap point.  After cooldown, lastY is already past that point
- *    so the crossing is never detected.
- *    Fix: window.scrollTo(0, scrollY) (instant) → rAF → scrollTo(smooth).
+ * 2. Scroll events fire at irregular intervals on iOS (batched by the
+ *    compositor), making scroll-event-based velocity wildly inaccurate.
+ *    Fix: measure velocity from `touchstart` / `touchmove` / `touchend`
+ *    directly, and only decide whether to snap at `touchend`.
  *
- * 2. No snapTimer / clearTimeout retry loop.
- *    Fast flings generate scroll events every 5–16 ms.  A delayed timer
- *    gets cancelled by every subsequent event before it fires.
- *    Fix: call doSnap() immediately on the FIRST crossing, then enter
- *    cooldown so subsequent events are ignored until we arrive.
+ * 3. Interfering with iOS rubber-banding causes visual glitches.
+ *    Fix: never call scrollTo during an active touch; only after
+ *    `touchend` once the finger lifts.
  *
- * 3. Strict `prevY > sp` (not >=) for upward crossings.
- *    After snapping to exactly sp, prevY === sp on the next fling.
- *    `>= sp` would immediately re-snap back to the same point.
- *    Fix: strict greater-than so the user can leave a snap point.
- *
- * 4. Always update lastY / lastTime even during cooldown.
- *    Skipping updates makes the first post-cooldown event compute
- *    velocity from a stale baseline → wrong direction / velocity.
- *
- * On desktop (non-touch, ≥1024 px) this hook does nothing.
+ * On desktop (non-touch, ≥1024px) this hook does nothing.
  */
 
 /** Must match StickySection.tsx / useScrollScaleFade.ts */
 const SECTION_SPAN_VH = 1.8;
 const NUM_SECTIONS = 3;
 
-/** Pixels / second above which a scroll is treated as a momentum fling. */
-const VELOCITY_THRESHOLD = 2000;
+/** Touch velocity (px/s) above which we treat a scroll as a momentum fling. */
+const VELOCITY_THRESHOLD = 1800;
+
+/** Duration of the manual snap animation (ms). */
+const SNAP_DURATION_MS = 500;
 
 /**
- * ms to suppress new snap logic after a programmatic snap fires.
- * Smooth-scroll typically takes 300–600 ms; 750 ms gives a comfortable
- * buffer so we don't re-trigger while still animating.
+ * How long (ms) to ignore new snaps after one fires,
+ * letting the animation finish undisturbed.
  */
-const SNAP_COOLDOWN_MS = 750;
+const SNAP_COOLDOWN_MS = 600;
+
+/** Simple ease-out cubic for the snap animation. */
+function easeOutCubic(t: number): number {
+  return 1 - Math.pow(1 - t, 3);
+}
 
 export function useScrollDamper() {
   useEffect(() => {
@@ -70,121 +54,185 @@ export function useScrollDamper() {
 
     if (!isTouchDevice && !isSmallScreen) return;
 
-    /**
-     * DOWN snap points — every section boundary (start AND end).
-     * (1 + i * SECTION_SPAN_VH) * vh  for i = 0..NUM_SECTIONS   (inclusive)
-     *   = [1.0, 2.8, 4.6, 6.4] × vh  = [900, 2520, 4140, 5760] at 900 px
-     *
-     * Includes section STARTS (900, 2520, 4140) so each component gets to
-     * "spin up" — appear at scale:1 with heading visible and internal scroll
-     * ready — before the fling can continue to the section's END.
-     * Also includes the gallery start (5760) as the final down checkpoint.
-     */
-    const computeDownSnapPoints = (): number[] => {
-      const vh = window.innerHeight;
-      return Array.from({ length: NUM_SECTIONS + 1 }, (_, i) =>
-        (1 + i * SECTION_SPAN_VH) * vh
-      );
-    };
-
-    /**
-     * UP snap points — section starts only.
-     * (1 + i * SECTION_SPAN_VH) * vh  for i = 0..NUM_SECTIONS-1
-     *   = [1.0, 2.8, 4.6] × vh  = [900, 2520, 4140] at 900 px viewport
-     *
-     * When scrolling up from the gallery, skips the 5760 intermediate stop
-     * and snaps directly to CreativeSuite's start (4140) in one swipe.
-     */
-    const computeUpSnapPoints = (): number[] => {
+    const computeSnapPoints = (): number[] => {
       const vh = window.innerHeight;
       return Array.from({ length: NUM_SECTIONS }, (_, i) =>
         (1 + i * SECTION_SPAN_VH) * vh
       );
     };
 
-    let downSnapPoints = computeDownSnapPoints();
-    let upSnapPoints = computeUpSnapPoints();
-    let lastY = window.scrollY;
-    let lastTime = performance.now();
-    let cooldownTimer: ReturnType<typeof setTimeout>;
+    let snapPoints = computeSnapPoints();
     let inCooldown = false;
+    let cooldownTimer: ReturnType<typeof setTimeout>;
+    let activeRafId: number | null = null;
+
+    // Touch tracking state
+    let touchStartY = 0;
+    let touchStartTime = 0;
+    let lastTouchY = 0;
+    let lastTouchTime = 0;
+    let isTouching = false;
 
     const onResize = () => {
-      downSnapPoints = computeDownSnapPoints();
-      upSnapPoints = computeUpSnapPoints();
+      snapPoints = computeSnapPoints();
     };
 
     /**
-     * Stop momentum then smooth-scroll to `target`.
+     * Animate to `target` using a manual rAF loop with easing.
      *
-     * The two-step pattern is intentional:
-     *   1. scrollTo(0, y)  — instant, synchronous; interrupts iOS/Android
-     *      momentum at the current position.
-     *   2. rAF → scrollTo({ smooth }) — waits one frame so the browser
-     *      processes the stop before we start the programmatic animation.
-     *
-     * Without step 1, momentum continues during the 750 ms cooldown and
-     * silently carries the page past the next snap point (see constraint 1).
+     * Why not `behavior: "smooth"`?
+     * iOS Safari's programmatic smooth scroll is routinely overridden
+     * by active momentum scrolling. Using per-frame `behavior: "instant"`
+     * jumps gives us full control and works reliably on all platforms.
      */
-    const doSnap = (target: number) => {
+    const animateSnap = (target: number) => {
+      // Cancel any in-flight animation
+      if (activeRafId !== null) {
+        cancelAnimationFrame(activeRafId);
+        activeRafId = null;
+      }
+
+      const startY = window.scrollY;
+      const distance = target - startY;
+      if (Math.abs(distance) < 2) return; // already there
+
+      const startTime = performance.now();
+
       inCooldown = true;
       clearTimeout(cooldownTimer);
-      window.scrollTo(0, window.scrollY); // interrupt momentum
-      requestAnimationFrame(() => {
-        window.scrollTo({ top: target, behavior: "smooth" });
-      });
-      cooldownTimer = setTimeout(() => {
-        inCooldown = false;
-        lastY = window.scrollY;
-        lastTime = performance.now();
-      }, SNAP_COOLDOWN_MS);
+
+      const step = (now: number) => {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / SNAP_DURATION_MS, 1);
+        const eased = easeOutCubic(progress);
+
+        window.scrollTo({ top: startY + distance * eased, behavior: "instant" as ScrollBehavior });
+
+        if (progress < 1) {
+          activeRafId = requestAnimationFrame(step);
+        } else {
+          activeRafId = null;
+          // End cooldown slightly after animation to absorb trailing events
+          cooldownTimer = setTimeout(() => {
+            inCooldown = false;
+          }, SNAP_COOLDOWN_MS - SNAP_DURATION_MS);
+        }
+      };
+
+      activeRafId = requestAnimationFrame(step);
     };
 
-    const onScroll = () => {
-      const now = performance.now();
-      const dt = now - lastTime;
-      const currentY = window.scrollY;
-      const signedDy = currentY - lastY;
-      const prevY = lastY;
+    /**
+     * Find the snap target when a fast fling is detected.
+     * Returns the snap point to animate to, or null if no snap is needed.
+     */
+    const findSnapTarget = (
+      scrollY: number,
+      velocity: number,
+      goingUp: boolean
+    ): number | null => {
+      // Check highest → lowest when going up; lowest → highest going down
+      const ordered = goingUp ? [...snapPoints].reverse() : snapPoints;
 
-      // Always keep position tracking current — even during cooldown.
-      lastY = currentY;
-      lastTime = now;
-
-      if (inCooldown) return;
-      if (dt <= 0) return;
-
-      const velocity = (Math.abs(signedDy) / dt) * 1000; // px/s
-      if (velocity < VELOCITY_THRESHOLD) return;
-
-      const goingUp = signedDy < 0;
-
-      if (goingUp) {
-        // Check highest → lowest: stop at the topmost section start crossed.
-        const ordered = [...upSnapPoints].reverse();
-        for (const sp of ordered) {
-          if (prevY > sp && currentY < sp) {
-            doSnap(sp);
-            return;
+      for (const sp of ordered) {
+        if (goingUp) {
+          // Snap to the nearest section-start that's ABOVE current position
+          if (scrollY <= sp + window.innerHeight * 0.3 && scrollY > sp - window.innerHeight * 0.3) {
+            return sp;
           }
-        }
-      } else {
-        // Check lowest → highest: stop at the first section end crossed.
-        for (const sp of downSnapPoints) {
-          if (prevY < sp && currentY > sp) {
-            doSnap(sp);
-            return;
+        } else {
+          // Snap to the nearest section-start that's BELOW or near current position
+          if (scrollY >= sp - window.innerHeight * 0.5 && scrollY < sp + window.innerHeight * 0.3) {
+            return sp;
           }
         }
       }
+
+      // Fallback: find the closest snap point in the direction of travel
+      let best: number | null = null;
+      let bestDist = Infinity;
+      for (const sp of snapPoints) {
+        const dist = goingUp ? scrollY - sp : sp - scrollY;
+        if (dist > 0 && dist < bestDist) {
+          bestDist = dist;
+          best = sp;
+        }
+      }
+
+      return best;
     };
 
-    window.addEventListener("scroll", onScroll, { passive: true });
+    const onTouchStart = (e: TouchEvent) => {
+      // Cancel any running snap animation when user touches
+      if (activeRafId !== null) {
+        cancelAnimationFrame(activeRafId);
+        activeRafId = null;
+        inCooldown = false;
+        clearTimeout(cooldownTimer);
+      }
+
+      isTouching = true;
+      const touch = e.touches[0];
+      touchStartY = touch.clientY;
+      touchStartTime = performance.now();
+      lastTouchY = touch.clientY;
+      lastTouchTime = touchStartTime;
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (!isTouching) return;
+      const touch = e.touches[0];
+      lastTouchY = touch.clientY;
+      lastTouchTime = performance.now();
+    };
+
+    const onTouchEnd = () => {
+      if (!isTouching) return;
+      isTouching = false;
+
+      if (inCooldown) return;
+
+      const now = performance.now();
+      const dt = now - lastTouchTime;
+
+      // Use the overall gesture if the last touchmove was too old
+      const effectiveDt = dt < 100 ? now - lastTouchTime : now - touchStartTime;
+      const effectiveDy = dt < 100
+        ? touchStartY - lastTouchY  // positive = finger moved up = scrolling down
+        : touchStartY - lastTouchY;
+
+      if (effectiveDt <= 0) return;
+
+      const velocity = (Math.abs(effectiveDy) / effectiveDt) * 1000; // px/s
+      if (velocity < VELOCITY_THRESHOLD) return;
+
+      const goingDown = effectiveDy > 0;
+
+      // Use a small delay to let momentum start, then check position
+      // This allows us to snap based on where momentum is actually heading
+      setTimeout(() => {
+        if (inCooldown) return;
+
+        const currentY = window.scrollY;
+        const target = findSnapTarget(currentY, velocity, !goingDown);
+
+        if (target !== null && Math.abs(target - currentY) > 10) {
+          animateSnap(target);
+        }
+      }, 80);
+    };
+
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: true });
+    window.addEventListener("touchend", onTouchEnd, { passive: true });
     window.addEventListener("resize", onResize, { passive: true });
 
     return () => {
+      if (activeRafId !== null) cancelAnimationFrame(activeRafId);
       clearTimeout(cooldownTimer);
-      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onTouchEnd);
       window.removeEventListener("resize", onResize);
     };
   }, []);

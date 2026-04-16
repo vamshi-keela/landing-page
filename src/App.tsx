@@ -17,11 +17,13 @@ import { useScrollDamper } from "./hooks/useScrollDamper";
 
 /**
  * Zero-height invisible div that registers a CSS scroll-snap anchor at its
- * exact DOM position. Because html already has `scroll-snap-type: y proximity`
- * in index.css, placing one of these directly before a section activates the
- * browser's compositor-level native snapping for normal-speed scrolls — zero
- * JS, zero lag. The JS damper in useScrollDamper covers fast flings that
- * overshoot the proximity zone.
+ * exact DOM position. On desktop (hover:hover + pointer:fine), the html
+ * element has `scroll-snap-type: y proximity` — placing one of these before
+ * a section activates native compositor-level snapping.
+ *
+ * On touch devices (mobile), CSS scroll-snap is intentionally disabled
+ * because it conflicts with position:sticky on iOS Safari. The JS-based
+ * useScrollDamper handles the equivalent snapping via touch events instead.
  */
 const SnapAnchor = () => (
   <div

@@ -53,33 +53,17 @@ const StickySection = ({ index, children }: StickySectionProps) => {
     if (!el) return;
 
     let wasPinned = false;
-    // True while scrollY is within the section's "start zone" — the narrow
-    // band at the top of its sticky range where the heading should be visible.
-    let wasInStartZone = false;
 
     const checkPinned = () => {
       const sectionStart = (1 + (index - 1) * SECTION_SPAN_VH) * cachedVh;
-      const scrollY = window.scrollY;
-      const pinned = scrollY >= sectionStart - 2;
+      const pinned = window.scrollY >= sectionStart - 2;
 
-      // Only touch the DOM if the pinned state actually changed.
+      // Only touch the DOM if the state actually changed.
       if (pinned !== wasPinned) {
         wasPinned = pinned;
         el.classList.toggle("max-md:overflow-y-auto", pinned);
         el.classList.toggle("max-md:overflow-y-hidden", !pinned);
       }
-
-      // "Start zone": within 10 % of a vh above the section's entry point.
-      // When the page scroll enters this zone (either scrolling down into the
-      // section for the first time, or snapping back here from a lower section),
-      // reset the section's own scrollTop so its heading is always visible.
-      // The edge-triggered flag means we only fire once per zone entry, so the
-      // user can still scroll internal content once they're past this band.
-      const inStartZone = pinned && scrollY <= sectionStart + cachedVh * 0.1;
-      if (inStartZone && !wasInStartZone) {
-        el.scrollTop = 0;
-      }
-      wasInStartZone = inStartZone;
     };
 
     window.addEventListener("scroll", checkPinned, { passive: true });
@@ -102,7 +86,9 @@ const StickySection = ({ index, children }: StickySectionProps) => {
           zIndex: Z_BY_INDEX[index],
           scale,
           opacity,
-          willChange: "transform",
+          transform: "translate3d(0, 0, 0)",
+          backfaceVisibility: "hidden",
+          WebkitBackfaceVisibility: "hidden",
         }}
         className="sticky top-0 h-screen w-full bg-surface max-md:overflow-y-hidden md:overflow-hidden flex max-md:items-start max-md:justify-center md:items-center md:justify-center"
       >

@@ -12,7 +12,8 @@ import { Z_INDEX } from "../../utils/constants";
  *   rendering, but falls back gracefully.
  * - We pause entirely when the tab is hidden (Page Visibility API).
  */
-const PARTICLE_COUNT = 40; // reduced from 50
+const PARTICLE_COUNT_DESKTOP = 40;
+const PARTICLE_COUNT_MOBILE = 15; // significantly fewer on mobile for GPU savings
 
 interface Particle {
   x: number;
@@ -32,17 +33,19 @@ const Particles = () => {
     const ctx = canvas.getContext("2d", { alpha: true });
     if (!ctx) return;
 
+    const isMobile = window.innerWidth < 1024;
+    const particleCount = isMobile ? PARTICLE_COUNT_MOBILE : PARTICLE_COUNT_DESKTOP;
+
     let particles: Particle[] = [];
     let rafId: number;
     let isScrolling = false;
     let scrollTimer: ReturnType<typeof setTimeout>;
-    let frameCount = 0;
     let paused = false;
 
     const init = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
-      particles = Array.from({ length: PARTICLE_COUNT }, () => ({
+      particles = Array.from({ length: particleCount }, () => ({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
         size: Math.random() * 2 + 1,
@@ -58,11 +61,16 @@ const Particles = () => {
         return;
       }
 
-      frameCount++;
+      // On mobile, completely skip rendering during scroll to free
+      // GPU compositing budget for the scroll-driven transforms.
+      // Particles are decorative — nobody notices them during a fling.
+      if (isScrolling && isMobile) {
+        rafId = requestAnimationFrame(animate);
+        return;
+      }
 
-      // During scroll, only render every 3rd frame (~20fps) to yield
-      // main-thread time. Particles are subtle and don't need 60fps.
-      if (isScrolling && frameCount % 3 !== 0) {
+      // On desktop, throttle to ~20fps during scroll
+      if (isScrolling) {
         rafId = requestAnimationFrame(animate);
         return;
       }
@@ -90,13 +98,13 @@ const Particles = () => {
       rafId = requestAnimationFrame(animate);
     };
 
-    // Track scroll state so we can throttle during scroll
+    // Track scroll state — on mobile we fully pause rendering
     const onScroll = () => {
       isScrolling = true;
       clearTimeout(scrollTimer);
       scrollTimer = setTimeout(() => {
         isScrolling = false;
-      }, 150);
+      }, 200); // slightly longer debounce for iOS momentum
     };
 
     // Pause when tab hidden
