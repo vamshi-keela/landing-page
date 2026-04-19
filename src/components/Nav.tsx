@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import induceIcon from '../assets/induce_icon.svg';
 
 export function Nav() {
   const [scrolled, setScrolled] = useState(false);
@@ -18,10 +19,20 @@ export function Nav() {
 
   return (
     <nav className={`nav ${scrolled ? 'scrolled' : ''}`}>
-      <a href="#" className="nav-logo">
-        <span className="mark">Induce<em>.</em></span>
-        <span className="tag">AI Media Infrastructure</span>
-      </a>
+      <button
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+        aria-label="Scroll to top"
+      >
+        <img
+          src={induceIcon}
+          alt=''
+          width={32}
+          height={32}
+          className='w-32 sm:w-42 shrink-0 object-contain'
+          aria-hidden
+        />
+      </button>
       <div className="nav-links">
         <a href="#product">Product</a>
         <a href="#solutions">Solutions</a>
