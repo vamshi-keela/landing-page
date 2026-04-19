@@ -1,4 +1,5 @@
-import { useEffect, useRef, ReactNode, ElementType } from 'react';
+import { useEffect, useRef } from 'react';
+import type { ReactNode, ElementType } from 'react';
 
 /* Magnetic button — call as ref on any element */
 export function useMagnetic(strength = 0.28) {

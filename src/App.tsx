@@ -10,12 +10,12 @@ import { HowItWorks } from './components/HowItWorks';
 import { Audiences } from './components/Audiences';
 import { InfraStrip } from './components/InfraStrip';
 import { Gallery } from './components/Gallery';
-import { Testimonials } from './components/Testimonials';
+// import { Testimonials } from './components/Testimonials';
 import { Pricing } from './components/Pricing';
 import { FAQ } from './components/FAQ';
 import { FinalCTA } from './components/FinalCTA';
 import { Footer } from './components/Footer';
-import { Tweaks } from './components/Tweaks';
+// import { Tweaks } from './components/Tweaks';
 
 function App() {
   useRevealObserver();
