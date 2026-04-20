@@ -21,7 +21,6 @@ const textVariants = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.1 } },
 };
-
 const lineVariant = {
   hidden: { opacity: 0, y: 36 },
   visible: { opacity: 1, y: 0, transition: { duration: 1, ease } },
@@ -29,53 +28,49 @@ const lineVariant = {
 
 function FeatureItem({ f }: { f: (typeof FEATURES)[number] }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ['start end', 'end start'],
-  });
+  const { scrollYProgress } = useScroll({ target: containerRef, offset: ['start end', 'end start'] });
   const imgY = useTransform(scrollYProgress, [0, 1], ['8%', '-8%']);
 
   return (
-    <div ref={containerRef} className={`feature ${f.reverse ? 'reverse' : ''}`}>
-      {/* scroll-driven parallax on the image */}
-      <div className="f-still">
+    <div ref={containerRef} className="grid grid-cols-2 gap-20 items-center py-24 relative max-lg:grid-cols-1 max-lg:gap-10 max-lg:py-16">
+      {/* On mobile: text first, image last regardless of reverse */}
+      <div className={`f-still max-lg:order-2 ${f.reverse ? 'lg:order-2' : ''}`}>
         <motion.div
-          className="letterbox vignette"
+          className="letterbox vignette relative w-full overflow-hidden bg-black"
           style={{ y: imgY, willChange: 'transform' }}
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true, margin: '-120px' }}
           transition={{ duration: 1.2, ease }}
         >
-          <Shutter label={`FEATURE / ${f.n}`}>
-            <video
-              src={f.video}
-              autoPlay
-              muted
-              loop
-              playsInline
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            />
+          <Shutter label={`FEATURE / ${f.n}`} className="absolute inset-0" aspect="2.37 / 1">
+            <video src={f.video} autoPlay muted loop playsInline className="w-full h-full object-cover block" />
           </Shutter>
         </motion.div>
       </div>
 
-      {/* stagger children for text */}
       <motion.div
-        className="f-text"
+        className={`f-text max-lg:order-1 ${f.reverse ? 'lg:order-1' : ''}`}
         variants={textVariants}
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: '-100px' }}
       >
-        <motion.div variants={lineVariant} className="f-num">
-          <span className="line" /> {f.n}
+        <motion.div variants={lineVariant} className="font-mono text-[11px] tracking-[0.22em] text-on-surface-muted uppercase inline-flex items-center gap-[10px] mb-5">
+          <span className="w-[30px] h-px bg-primary" /> {f.n}
         </motion.div>
-        <motion.h3 variants={lineVariant} className="f-title">{f.title}</motion.h3>
-        <motion.p variants={lineVariant} className="f-body">{f.body}</motion.p>
-        <motion.div variants={lineVariant} className="f-meta">
+        <motion.h3 variants={lineVariant} className="font-display font-normal text-[clamp(32px,3.4vw,52px)] leading-[1.04] tracking-[-0.02em] m-0 mb-[18px] text-on-surface [text-wrap:balance]">
+          {f.title}
+        </motion.h3>
+        <motion.p variants={lineVariant} className="text-[17px] text-on-surface-variant leading-[1.55] max-w-[48ch] m-0 mb-6 [text-wrap:pretty]">
+          {f.body}
+        </motion.p>
+        <motion.div variants={lineVariant} className="flex gap-7 mt-7 pt-6">
           {f.meta.map(([v, k], idx) => (
-            <div className="m" key={idx}><b>{v}</b>{k}</div>
+            <div key={idx} className="font-mono text-[10px] tracking-[0.14em] uppercase text-on-surface-muted">
+              <b className="block text-on-surface text-[22px] tracking-[-0.01em] normal-case font-display font-medium mb-1">{v}</b>
+              {k}
+            </div>
           ))}
         </motion.div>
       </motion.div>
@@ -88,13 +83,15 @@ export function Features() {
     <section className="section low" id="product">
       <div className="container">
         <motion.div
-          className="features-head"
+          className="grid [grid-template-columns:auto_1fr] items-end mb-12 max-lg:grid-cols-1 max-lg:gap-6"
           initial={{ opacity: 0, y: 44 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 1, ease }}
         >
-          <h2>Built like a <em>film crew.</em><br />Runs like infrastructure.</h2>
+          <h2 className="font-display font-light text-[clamp(30px,5.4vw,84px)] leading-[0.98] tracking-[-0.025em] m-0 max-w-[20ch] [text-wrap:balance]">
+            Built like a <em className="italic text-primary font-light">film crew.</em><br />Runs like infrastructure.
+          </h2>
         </motion.div>
 
         {FEATURES.map(f => <FeatureItem key={f.n} f={f} />)}

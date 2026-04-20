@@ -1,11 +1,13 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export function Cursor() {
   const dotRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);
+  const [isTouch, setIsTouch] = useState(() => 'ontouchstart' in window);
 
   useEffect(() => {
-    if ('ontouchstart' in window) return;
+    if (isTouch) return;
+    if ('ontouchstart' in window) { setIsTouch(true); return; }
 
     document.body.classList.add('has-cursor');
 
@@ -58,6 +60,8 @@ export function Cursor() {
       document.body.classList.remove('has-cursor', 'cursor-hover');
     };
   }, []);
+
+  if (isTouch) return null;
 
   return (
     <>

@@ -68,21 +68,24 @@ export function ClapText({ text, as: Tag = 'h2', className = '', ...rest }: Clap
     return () => io.disconnect();
   }, []);
 
-  const parts: { text: string; emph: boolean }[] = [];
-  const re = /\[\[(.+?)\]\]|(\S+)/g;
+  const parts: { text: string; emph: boolean; br?: boolean }[] = [];
+  const re = /\n|\[\[(.+?)\]\]|(\S+)/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(text)) !== null) {
+    if (m[0] === '\n') { parts.push({ text: '', emph: false, br: true }); continue; }
     parts.push({ text: m[1] || m[2], emph: !!m[1] });
   }
 
   return (
     <Tag ref={ref} className={`clap ${className}`} {...rest}>
-      {parts.map((p, i) => (
+      {parts.map((p, i) => p.br
+        ? <br key={i} />
+        : (
         <span key={i}>
           <span className="w">
             {p.emph ? <em className="wi">{p.text}</em> : <span className="wi">{p.text}</span>}
           </span>
-          {i < parts.length - 1 ? ' ' : ''}
+          {i < parts.length - 1 && !parts[i + 1]?.br ? ' ' : ''}
         </span>
       ))}
     </Tag>
